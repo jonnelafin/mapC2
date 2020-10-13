@@ -158,6 +158,11 @@ def keyPressed():
         val = booster.showTextInputDialog("Current mapcode " + code + "\nPaste new mapcode here:")
         if not checkCode(val):
             booster.showErrorDialog("Invalid mapcode!", "Error")
+        else:
+            subdivs, data, yeets = unpack(val)
+            data = dataFromPacked(data, subdivs-1, yeets)
+            print(data)
+            print(parseMap(toInt(genMap(data, subdivs)), subdivs, yeets))
     elif str(key) == "i":
         showInfo()
 def showInfo():
