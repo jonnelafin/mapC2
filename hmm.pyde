@@ -106,6 +106,11 @@ def draw():
             my = mouseY - (height/subdivs/2)
             
             pointer = str([i, z])
+            dat = False
+            try:
+                dat = data[pointer]
+            except Exception as e:
+                data[pointer] = False
             if abs(mx - x) < (width/subdivs/2) and abs(my - y) < (height/subdivs/2):
                 fill(255, 255, 255)
                 rect(x, y, width/subdivs, height/subdivs)
@@ -124,6 +129,12 @@ def draw():
 def mouseClicked(): 
     global mDown
     mDown = True
+def keyPressed():
+    global subdivs, data
+    if key in "123456789":
+        subdivs = int(key)
+    elif str(key) == "c":
+        data = {}
 def genMap(dat, subdiv):
     out = ""
     for i in range(subdiv):
@@ -135,8 +146,3 @@ def genMap(dat, subdiv):
             else:
                 out += "0"
     return out
-def altGenMap(dat, subdiv):
-    grid = []
-    for y in range(subdiv):
-        for x in range(subdiv):
-            grid[y,x] = "0"
