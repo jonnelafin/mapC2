@@ -1,5 +1,6 @@
 #Written By Elias Eskelinen aka "jonnelafin"
 add_library('UiBooster')
+import time
 
 def toBin(val, original=-1):
     bin = format(int(val), '08b')
@@ -56,18 +57,18 @@ def dataFromPacked(val, w, siz):
     aind = 0
     bin = toBin(val, siz)
     for i in bin:
-        print(y, x, i, aind)
+        #print(y, x, i, aind)
         if ind > w:
             ind = 0
             x = 0
             y += 1
-            print(buff)
+            #print(buff)
             buff = ""
         elif aind + 2 > siz:
             x += 1
             dat[str([x,y])] = (bin[aind] == "1")
             buff += bin[aind]
-            print(buff)
+            #print(buff)
         else:
             x += 1
         buff += i
@@ -82,13 +83,13 @@ def unpack(packd):
     return subdiv, data, fsize
 def setup():
     size(500, 500)
-    global subdivs, data, mDown
+    global subdivs, data, mDown, booster
     subdivs = 10
     data = genDat(subdivs)#[[False]*subdivs]*subdivs
     print(data["[0, 0]"])
     mDown = False
     booster = UiBooster()
-    subdivs, data, yeets = unpack(booster.showTextInputDialog("Paste your mapcode here:"));
+    subdivs, data, yeets = unpack(booster.showTextInputDialog("Paste your mapcode here:"))
     data = dataFromPacked(data, subdivs-1, yeets)
     print(data)
     print(parseMap(toInt(genMap(data, subdivs)), subdivs, yeets))
@@ -131,10 +132,52 @@ def mouseClicked():
     mDown = True
 def keyPressed():
     global subdivs, data
-    if key in "123456789":
+    if str(key) in "123456789":
         subdivs = int(key)
     elif str(key) == "c":
         data = {}
+    elif str(key) == "z":
+        m = genMap(data, subdivs)
+        en = toInt(m)
+        code = pack(str(int(en)-1), subdivs, len(m))
+        print(code)
+        subdivs, data, yeets = unpack(code);
+        data = dataFromPacked(data, subdivs-1, yeets)
+    elif str(key) == "x":
+        m = genMap(data, subdivs)
+        en = toInt(m)
+        code = pack(str(int(en)+1), subdivs, len(m))
+        print(code)
+        subdivs, data, yeets = unpack(code);
+        data = dataFromPacked(data, subdivs-1, yeets)
+    elif str(key) == "s" or str(key) == "o":
+        m = genMap(data, subdivs)
+        en = toInt(m)
+        code = pack(str(int(en)), subdivs, len(m))
+        val = booster.showTextInputDialog("Current mapcode " + code + "\nPaste new mapcode here:")
+        if not checkCode(val):
+            booster.showErrorDialog("Invalid mapcode!", "Error")
+    elif str(key) == "i":
+        showInfo()
+def showInfo():
+    booster.showInfoDialog("Welcome to mapCompressor!\n\nClick on tiles to flip their state.\nPress c to clear,\z and x to modify the code directly,\no or s to save/load,\nnumbers from 1-9 to set the grid size and\i to show this dialogue.\n\nTo reset the export size to a lower value,\nyou must first reset data by pressing c.")
+def checkCode(code):
+    code = str(code)
+#    if str(type(code)) != "str":
+#        return False
+    print("Code passed test 1")
+    if not ("#" in code):
+        return False
+    print("Code passed test 2")
+    if code.count("#") < 1:
+        return False
+    print("Code passed test 3")
+    w, c, s = unpack(code)
+    if s/w != w:
+        print("Aspect ratio must match 1:1")
+        return False
+    print("Code passed test 4")
+    return True
 def genMap(dat, subdiv):
     out = ""
     for i in range(subdiv):
