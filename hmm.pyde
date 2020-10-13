@@ -1,6 +1,5 @@
-
-
-
+#Written By Elias Eskelinen aka "jonnelafin"
+add_library('UiBooster')
 
 def toBin(val, original=-1):
     bin = format(int(val), '08b')
@@ -24,8 +23,8 @@ def parseMap(val, wsize, fsize = -1):
 def pack(data, wsize, fsize):
     return str(wsize) + "#" + str(data) + "#" + str(fsize)
 if __name__ == "__main__":
-    map =  "001100110011001100"
-    mapw = 6
+    map =  "010101010"
+    mapw = 3
 
 
     #print("Map: " + map)
@@ -47,6 +46,40 @@ def genDat(subdiv):
         for z in range(subdiv):
             dat[str([i,z])] = False
     return dat
+def dataFromPacked(val, w, siz):
+    dat = {}
+    ind = 0
+    x = -1
+    y = 0
+    print(toBin(val, siz))
+    buff = ""
+    aind = 0
+    bin = toBin(val, siz)
+    for i in bin:
+        print(y, x, i, aind)
+        if ind > w:
+            ind = 0
+            x = 0
+            y += 1
+            print(buff)
+            buff = ""
+        elif aind + 2 > siz:
+            x += 1
+            dat[str([x,y])] = (bin[aind] == "1")
+            buff += bin[aind]
+            print(buff)
+        else:
+            x += 1
+        buff += i
+        ind = ind + 1
+        aind += 1
+        dat[str([x,y])] = (i == "1")
+    return dat
+def unpack(packd):
+    subdiv = int(packd.split("#")[0].replace("#", ""))
+    data = packd.split("#")[1].split("#")[0].replace("#", "")
+    fsize = int(packd.split("#")[2].replace("#", ""))
+    return subdiv, data, fsize
 def setup():
     size(500, 500)
     global subdivs, data, mDown
@@ -54,6 +87,11 @@ def setup():
     data = genDat(subdivs)#[[False]*subdivs]*subdivs
     print(data["[0, 0]"])
     mDown = False
+    booster = UiBooster()
+    subdivs, data, yeets = unpack(booster.showTextInputDialog("Paste your mapcode here:"));
+    data = dataFromPacked(data, subdivs-1, yeets)
+    print(data)
+    print(parseMap(toInt(genMap(data, subdivs)), subdivs, yeets))
 def draw():
     global mDown, data
     background(150, 150, 150)
@@ -69,7 +107,7 @@ def draw():
             
             pointer = str([i, z])
             if abs(mx - x) < (width/subdivs/2) and abs(my - y) < (height/subdivs/2):
-                color(255, 0, 0)
+                fill(255, 255, 255)
                 rect(x, y, width/subdivs, height/subdivs)
                 if mDown:
                     mDown = False
@@ -78,9 +116,10 @@ def draw():
                     en = toInt(m)
                     print(m)
                     print(en)
-                    print(parseMap(en, subdivs-1, len(m)))
+                    print(pack(en, subdivs, len(m)))
+                    #print(parseMap(en, subdivs-1, len(m)))
             elif data[pointer] == True:
-                color(0, 255, 0)
+                fill(0, 255, 0)
                 rect(x, y, width/subdivs, height/subdivs)
 def mouseClicked(): 
     global mDown
@@ -96,3 +135,8 @@ def genMap(dat, subdiv):
             else:
                 out += "0"
     return out
+def altGenMap(dat, subdiv):
+    grid = []
+    for y in range(subdiv):
+        for x in range(subdiv):
+            grid[y,x] = "0"
