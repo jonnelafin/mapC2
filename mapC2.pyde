@@ -1,6 +1,14 @@
 #Written By Elias Eskelinen aka "jonnelafin"
+#Some examples:
+# 10#89219024037939033406124925000#100
+# 11#36764827488688866953459972691816448#121
+# 5#0x00057DC4#25
+# 6#0x12492780#36
+# 7#1907373448064#49
 add_library('UiBooster')
 import time
+
+
 
 def toBin(val, original=-1):
     if val == "" or val == "None":
@@ -92,7 +100,7 @@ def unpack(packd):
     return subdiv, data, fsize
 def setup():
     size(500, 500)
-    global subdivs, data, mDown, booster, asString
+    global subdivs, data, mDown, booster, asString, eGrid, eFill
     subdivs = 5
     data = genDat(subdivs)#[[False]*subdivs]*subdivs
     print(data["[0, 0]"])
@@ -103,13 +111,16 @@ def setup():
     #print(data)
     #print(parseMap(toInt(genMap(data, subdivs)), subdivs, yeets))
     asString = ""
+    eGrid = True
+    eFill = True
     showInfo()
 def draw():
     global mDown, data, asString
     background(150, 150, 150)
-    for i in range(subdivs+1):
-        line(width/subdivs*i, 0, width/subdivs*i, height)
-        line(0, height/subdivs*i, width, height/subdivs*i)
+    if eGrid:
+        for i in range(subdivs+1):
+            line(width/subdivs*i, 0, width/subdivs*i, height)
+            line(0, height/subdivs*i, width, height/subdivs*i)
     for i in range(subdivs):
         for z in range(subdivs):
             x = width/subdivs*i
@@ -123,9 +134,13 @@ def draw():
                 dat = data[pointer]
             except Exception as e:
                 data[pointer] = False
+            if data[pointer] == True:
+                fill(0, 255, 0)
+                rect(x, y, width/subdivs, height/subdivs)
             if abs(mx - x) < (width/subdivs/2) and abs(my - y) < (height/subdivs/2):
                 fill(255, 255, 255)
-                rect(x, y, width/subdivs, height/subdivs)
+                if eFill:
+                    rect(x, y, width/subdivs, height/subdivs)
                 if mDown:
                     mDown = False
                     data[pointer] = not data[pointer]
@@ -135,9 +150,6 @@ def draw():
                     print(en)
                     print(pack(en, subdivs, len(m)))
                     #print(parseMap(en, subdivs-1, len(m)))
-            elif data[pointer] == True:
-                fill(0, 255, 0)
-                rect(x, y, width/subdivs, height/subdivs)
     fill(220, 0, 0)
     m = genMap(data, subdivs)
     en = toInt(m)
@@ -147,7 +159,7 @@ def mouseClicked():
     global mDown
     mDown = True
 def keyPressed():
-    global subdivs, data
+    global subdivs, data, eGrid, eFill
     if str(key) in "123456789":
         subdivs = int(key)
     elif str(key) == "c":
@@ -196,6 +208,10 @@ def keyPressed():
         subdivs -= 1
     elif str(key) == ".":
         subdivs += 1
+    elif str(key) == "g":
+        eGrid = not eGrid
+    elif str(key) == "f":
+        eFill = not eFill
 def showInfo():
     booster.showInfoDialog("Welcome to mapC2!\n\nClick on tiles to flip their state.\nPress c to clear,\nz and x to modify the code directly,\no or s to save/load,\nnumbers from 1-9 to set the grid size and\i to show this dialogue.\n\nTo reset the export size to a lower value,\nyou must first reset data by pressing c.")
 def checkCode(code):
@@ -215,6 +231,15 @@ def checkCode(code):
             print("Aspect ratio must match 1:1")
             return False
         print("Code passed test 4")
+        if not ("0x" in c[:2]):
+            for i in c:
+                if not (i in "0123456789"):
+                    return False
+        else:
+            for i in c:
+                if not (i.lower() in "0123456789abcdfx"):
+                    return False
+        print("Code passed test 5")
         return True
     except Exception as e:
         return False
