@@ -84,15 +84,16 @@ def unpack(packd):
 def setup():
     size(500, 500)
     global subdivs, data, mDown, booster
-    subdivs = 10
+    subdivs = 5
     data = genDat(subdivs)#[[False]*subdivs]*subdivs
     print(data["[0, 0]"])
     mDown = False
     booster = UiBooster()
-    subdivs, data, yeets = unpack(booster.showTextInputDialog("Paste your mapcode here:"))
-    data = dataFromPacked(data, subdivs-1, yeets)
-    print(data)
-    print(parseMap(toInt(genMap(data, subdivs)), subdivs, yeets))
+    #subdivs, data, yeets = unpack(booster.showTextInputDialog("Paste your mapcode here:"))
+    #data = dataFromPacked(data, subdivs-1, yeets)
+    #print(data)
+    #print(parseMap(toInt(genMap(data, subdivs)), subdivs, yeets))
+    showInfo()
 def draw():
     global mDown, data
     background(150, 150, 150)
