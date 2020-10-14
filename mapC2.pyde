@@ -231,6 +231,8 @@ def keyPressed():
         eFill = not eFill
     elif str(key) == "m":
         math()
+    elif str(key) == "b":
+        bitwise()
 def showInfo():
     booster.showInfoDialog("Welcome to mapC2!\n\nClick on tiles to flip their state.\nPress c to clear,\nz and x to modify the code directly,\no or s to save/load,\nm to use the math function, \nnumbers from 1-9 to set the grid size and\i to show this dialogue.\n\nTo reset the export size to a lower value,\nyou must first reset data by pressing c.")
 def checkCode(code, full=True):
@@ -316,6 +318,61 @@ def math():
     
     global subdivs, data
     m = genMap(data, subdivs)
+    
+    val = pack(code, subdivs, len(m))
+    print(val)
+    subdivs, data, yeets = unpack(val)
+    data = dataFromPacked(data, subdivs-1, yeets)
+def bitwise():
+    #0x00421084
+    #0x00007C00
+    retry = True
+    while retry:
+        valA = booster.showTextInputDialog("Type in value A:")
+        if str(valA) == "None":
+            return
+        if checkCode(valA, False):
+            retry = False
+            break
+        else:
+            booster.showErrorDialog("Invalid mapcode!", "Error")
+    retry = True
+    while retry:
+        valB = booster.showTextInputDialog("Type in value B:")
+        if str(valB) == "None":
+            return
+        if checkCode(valB, False):
+            retry = False
+            break
+        else:
+            booster.showErrorDialog("Invalid mapcode!", "Error")
+    op = booster.showSelectionDialog("Please select the operator: ", "MapC2 - Bitwise", "AND","OR", "NOT", "XOR")
+    
+    if "0x" in valA[:2]:
+        valA = int(valA, 0)
+    else:
+        valA = int(valA)
+    if "0x" in valB[:2]:
+        valB = int(valB, 0)
+    else:
+        valB = int(valB)
+    
+    global subdivs, data
+    m = genMap(data, subdivs)
+    
+    
+    code = ""
+    print(str(valA)+op+str(valB))
+    if op == "AND":
+        code = str(valA & valB)
+    elif op == "OR":
+        code = str(valA | valB)
+    elif op == "NOT":
+        code = str(-(~valA))
+    elif op == "XOR":
+        code = str(valA ^ valB)
+    
+    
     
     val = pack(code, subdivs, len(m))
     print(val)
