@@ -79,7 +79,7 @@ def dataFromPacked(val, w, siz):
     ind = 0
     x = -1
     y = 0
-    print(toBin(val, siz))
+#    print(toBin(val, siz))
     buff = ""
     aind = 0
     bin = toBin(val, siz)
@@ -110,7 +110,8 @@ def unpack(packd):
     return subdiv, data, fsize
 def setup():
     size(500, 500)
-    global subdivs, data, mDown, booster, asString, eGrid, eFill
+    global subdivs, data, mDown, booster, asString, eGrid, eFill, layers, layern
+    layersn = 5
     subdivs = 5
     data = genDat(subdivs)#[[False]*subdivs]*subdivs
     print(data["[0, 0]"])
@@ -123,9 +124,13 @@ def setup():
     asString = ""
     eGrid = True
     eFill = True
+    layers = []
+    layern = 0
+    for i in range(layersn):
+        layers.append(genDat(subdivs))
     showInfo()
 def draw():
-    global mDown, data, asString
+    global mDown, data, asString, layers
     background(150, 150, 150)
     if eGrid:
         for i in range(subdivs+1):
@@ -144,6 +149,8 @@ def draw():
                 dat = data[pointer]
             except Exception as e:
                 data[pointer] = False
+                for li in range(len(layers)):
+                    layers[li][pointer] = False
             if data[pointer] == True:
                 fill(0, 255, 0)
                 rect(x, y, width/subdivs, height/subdivs)
@@ -156,11 +163,12 @@ def draw():
                     data[pointer] = not data[pointer]
                     m = genMap(data, subdivs)
                     en = toInt(m)
-                    print(m)
-                    print(en)
+                    #print(m)
+                    #print(en)
                     print(pack(en, subdivs, len(m)))
                     #print(parseMap(en, subdivs-1, len(m)))
     fill(220, 0, 0)
+    layers[layern] = data
     m = genMap(data, subdivs)
     en = toInt(m)
     asString = str(en)
@@ -200,29 +208,39 @@ def keyPressed():
         en = toInt(m)
         code = pack(str(en), subdivs, len(m))
         print("Current mapcode is: " + code)
+        print("Layers: ")
+        all = ""
+        indl = 0
+        for l in layers:
+            m = genMap(l, subdivs)
+            en = toInt(m)
+            code = pack(str(en), subdivs, len(m))
+            all += code + "N"
+            print("\tLayer " + str(indl) + ": " + code)
+            indl += 1
+        print("Combined code: " + all)
         val = booster.showTextInputDialog("Current mapcode is " + code + "\nPaste new mapcode here:")
         if str(val) == "" or str(val) == "None":
             op = ""
-        elif not checkCode(val):
-            if checkCode(pack(val, subdivs, len(m))):
+        elif not checkCode(val, True, True):
+            if checkCode(val, False):#checkCode(pack(val, subdivs, len(m))):
                 val = pack(val, subdivs, len(m))
-                print(val)
+#                print(val)
                 subdivs, data, yeets = unpack(val)
                 data = dataFromPacked(data, subdivs-1, yeets)
-                print(data)
-                print(parseMap(toInt(genMap(data, subdivs)), subdivs, yeets))
-                print("Yeet")
+#                print(data)
+#                print(parseMap(toInt(genMap(data, subdivs)), subdivs, yeets))
             else:
                 booster.showErrorDialog("Invalid mapcode!", "Error")
         else:
             subdivs, data, yeets = unpack(val)
             data = dataFromPacked(data, subdivs-1, yeets)
-            print(data)
-            print(parseMap(toInt(genMap(data, subdivs)), subdivs, yeets))
+#            print(data)
+#            print(parseMap(toInt(genMap(data, subdivs)), subdivs, yeets))
     elif str(key) == "i":
         showInfo()
     elif str(key) == ",":
-        subdivs -= 1
+        subdivs = max(subdivs-1, 1)
     elif str(key) == ".":
         subdivs += 1
     elif str(key) == "g":
@@ -233,41 +251,54 @@ def keyPressed():
         math()
     elif str(key) == "b":
         bitwise()
+    elif str(key) in "ertyu":
+        layer("ertyu".find(str(key)))
 def showInfo():
-    booster.showInfoDialog("Welcome to mapC2!\n\nClick on tiles to flip their state.\nPress c to clear,\nz and x to modify the code directly,\no or s to save/load,\nm to use the math function, \nnumbers from 1-9 to set the grid size and\i to show this dialogue.\n\nTo reset the export size to a lower value,\nyou must first reset data by pressing c.")
-def checkCode(code, full=True):
+    booster.showInfoDialog("Welcome to mapC2 by Jonnelafin!\n\nClick on tiles to flip their state.\nPress c to clear,\nz and x to modify the code directly,\no or s to save/load,\nm to use the math function, \nnumbers from 1-9 to set the grid size, \nkeys e, r, t, y and u to switch layers and\ni to show this dialogue. \n\nMapcodes are easiest to copy from the console.\nGood Luck!")
+def checkCode(code, full=True, silence=False):
     try:
         code = str(code)
         if len(str((code))) < 1:
+            if not silence:
+                print("E: Mapcode too short!")
             return False
-        print("Code passed test 1")
+#        print("Code passed test 1")
         if not ("#" in code) and full:
+            if not silence:
+                print("E: A full mapcode should include \"#\"")
             return False
-        print("Code passed test 2")
+#        print("Code passed test 2")
         if code.count("#") != 2 and full:
+            if not silence:
+                print("E: A full mapcode should only have 2 instances of #, this has " + str(code.count("#")))
             return False
-        print("Code passed test 3")
+#        print("Code passed test 3")
         if full:
             w, c, s = unpack(code)
             if s/w != w:
-                print("Aspect ratio must match 1:1")
+                if not silence:
+                    print("E: Aspect ratio must match 1:1")
                 return False
         else:
             c = code
-        print("Code passed test 4")
+#        print("Code passed test 4")
         if not ("0x" in c[:2]):
-            print("Detected numerical code.")
+            if not silence:
+                print("Detected numerical code.")
             for i in c:
                 if not (i in "0123456789"):
-                    print("E: " + i.lower() + " is not a number!")
+                    if not silence:
+                        print("E: " + i.lower() + " is not a number!")
                     return False
         else:
-            print("Detected hexadecimal code.")
+            if not silence:
+                print("Detected hexadecimal code.")
             for i in c:
                 if not (i.lower() in "0123456789abcdefx"):
-                    print("E: " + i.lower() + " is not hexadecimal!")
+                    if not silence:
+                        print("E: " + i.lower() + " is not hexadecimal!")
                     return False
-        print("Code passed test 5")
+#        print("Code passed test 5")
         return True
     except Exception as e:
         return False
@@ -378,6 +409,11 @@ def bitwise():
     print(val)
     subdivs, data, yeets = unpack(val)
     data = dataFromPacked(data, subdivs-1, yeets)
+def layer(num):
+    global layers, layern, data
+    layers[layern] = data
+    layern = num
+    data = layers[num]
 def genMap(dat, subdiv):
     out = ""
     for i in range(subdiv):
