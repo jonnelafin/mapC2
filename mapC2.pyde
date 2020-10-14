@@ -5,13 +5,15 @@
 # 5#0x00057DC4#25
 # 6#0x12492780#36
 # 7#1907373448064#49
+#Full layers:
+# 4#0x00000660#16N4#0x0000CC00#16N4#0x0000CA60#16N4#0x00000033#16N4#0x0000CA53#16N
 #Math example:
 #Try making a donut with the math function
 # 5#0x000739C0#25
 # 0x00001000
 # select - as the operator
+
 add_library('UiBooster')
-import time
 
 
 
@@ -110,7 +112,7 @@ def unpack(packd):
     return subdiv, data, fsize
 def setup():
     size(500, 500)
-    global subdivs, data, mDown, booster, asString, eGrid, eFill, layers, layern
+    global subdivs, data, mDown, booster, asString, eGrid, eFill, layers, layern, layerSel
     layersn = 5
     subdivs = 5
     data = genDat(subdivs)#[[False]*subdivs]*subdivs
@@ -128,6 +130,7 @@ def setup():
     layern = 0
     for i in range(layersn):
         layers.append(genDat(subdivs))
+    layerSel = False
     showInfo()
 def draw():
     global mDown, data, asString, layers
@@ -177,7 +180,7 @@ def mouseClicked():
     global mDown
     mDown = True
 def keyPressed():
-    global subdivs, data, eGrid, eFill
+    global subdivs, data, eGrid, eFill, layerSel
     if str(key) in "123456789":
         subdivs = int(key)
     elif str(key) == "c":
@@ -202,7 +205,7 @@ def keyPressed():
         subdivs, data, yeets = unpack(code);
         print(code)
         data = dataFromPacked(data, subdivs-1, yeets)
-    elif str(key) == "s" or str(key) == "o":
+    elif (str(key) == "s" or str(key) == "o") and not layerSel:
         m = genMap(data, subdivs)
         print(m)
         en = toInt(m)
@@ -237,6 +240,41 @@ def keyPressed():
             data = dataFromPacked(data, subdivs-1, yeets)
 #            print(data)
 #            print(parseMap(toInt(genMap(data, subdivs)), subdivs, yeets))
+    elif (str(key) == "s" or str(key) == "o") and layerSel:
+        m = genMap(data, subdivs)
+        print(m)
+        en = toInt(m)
+        code = pack(str(en), subdivs, len(m))
+        print("Current mapcode is: " + code)
+        print("Layers: ")
+        all = ""
+        indl = 0
+        for l in layers:
+            m = genMap(l, subdivs)
+            en = toInt(m)
+            code = pack(str(en), subdivs, len(m))
+            all += code + "N"
+            print("\tLayer " + str(indl) + ": " + code)
+            indl += 1
+        print("Combined code: " + all)
+        val = booster.showTextInputDialog("Current mapcode is " + code + "\nPaste new mapcode with all layers here:")
+        if str(val) == "" or str(val) == "None":
+            op = ""
+        elif not checkCode(val, False, False, True):
+            booster.showErrorDialog("Invalid mapcode!", "Error")
+        else:
+            indz = 0
+            for i in val.split("N"):
+                val2 = i.replace("N","")
+                if val2 != "":
+                    subdivs, dat, yeets = unpack(val2)
+                    dat = dataFromPacked(dat, subdivs-1, yeets)
+                    layers[indz] = dat
+                    if indz == layern:
+                        data = dat
+                    indz += 1
+#            print(data)
+#            print(parseMap(toInt(genMap(data, subdivs)), subdivs, yeets))
     elif str(key) == "i":
         showInfo()
     elif str(key) == ",":
@@ -253,9 +291,11 @@ def keyPressed():
         bitwise()
     elif str(key) in "ertyu":
         layer("ertyu".find(str(key)))
+    elif str(key) == "l":
+        layerSel = not layerSel
 def showInfo():
-    booster.showInfoDialog("Welcome to mapC2 by Jonnelafin!\n\nClick on tiles to flip their state.\nPress c to clear,\nz and x to modify the code directly,\no or s to save/load,\nm to use the math function, \nnumbers from 1-9 to set the grid size, \nkeys e, r, t, y and u to switch layers and\ni to show this dialogue. \n\nMapcodes are easiest to copy from the console.\nGood Luck!")
-def checkCode(code, full=True, silence=False):
+    booster.showInfoDialog("Welcome to mapC2 by Jonnelafin!\n\nClick on tiles to flip their state.\nPress c to clear,\nz and x to modify the code directly,\no or s to save/load,\nm to use the math function, \nb to use the bitwise function, \nl to switch between using codes and layers for math, bitwise and load, \nnumbers from 1-9 to set the grid size, \nkeys e, r, t, y and u to switch layers and\ni to show this dialogue. \n\nMapcodes are easiest to copy from the console.\nGood Luck!")
+def checkCode(code, full=True, silence=False, layrs = False):
     try:
         code = str(code)
         if len(str((code))) < 1:
@@ -263,16 +303,20 @@ def checkCode(code, full=True, silence=False):
                 print("E: Mapcode too short!")
             return False
 #        print("Code passed test 1")
-        if not ("#" in code) and full:
+        if not ("#" in code) and (full or layrs):
             if not silence:
                 print("E: A full mapcode should include \"#\"")
             return False
 #        print("Code passed test 2")
         if code.count("#") != 2 and full:
             if not silence:
-                print("E: A full mapcode should only have 2 instances of #, this has " + str(code.count("#")))
+                print("E: A full mapcode should have 2 instances of #, this has " + str(code.count("#")))
             return False
 #        print("Code passed test 3")
+        if code.count("#") != 10 and layrs:
+            if not silence:
+                print("E: A full mapcode should have 10 instances of #, this has " + str(code.count("#")))
+            return False
         if full:
             w, c, s = unpack(code)
             if s/w != w:
@@ -282,8 +326,16 @@ def checkCode(code, full=True, silence=False):
         else:
             c = code
 #        print("Code passed test 4")
-        if not ("0x" in c[:2]):
-            if not silence:
+        if layrs:
+            if not silence or True:
+                print("Detected layer-dependent code.")
+            for i in c:
+                if not (i.lower() in "0123456789abcdefx#n"):
+                    if not silence:
+                        print("E: " + i.lower() + " is not hexadecimal!")
+                    return False
+        elif not ("0x" in c[:2]):
+            if not silence or True:
                 print("Detected numerical code.")
             for i in c:
                 if not (i in "0123456789"):
@@ -291,7 +343,7 @@ def checkCode(code, full=True, silence=False):
                         print("E: " + i.lower() + " is not a number!")
                     return False
         else:
-            if not silence:
+            if not silence or True:
                 print("Detected hexadecimal code.")
             for i in c:
                 if not (i.lower() in "0123456789abcdefx"):
@@ -305,26 +357,43 @@ def checkCode(code, full=True, silence=False):
 def math():
     #0x00421084
     #0x00007C00
-    retry = True
-    while retry:
-        valA = booster.showTextInputDialog("Type in value A:")
+    if not layerSel:
+        retry = True
+        while retry:
+            valA = booster.showTextInputDialog("Type in value A:")
+            if str(valA) == "None":
+                return
+            if checkCode(valA, False):
+                retry = False
+                break
+            else:
+                booster.showErrorDialog("Invalid mapcode!", "Error")
+        retry = True
+        while retry:
+            valB = booster.showTextInputDialog("Type in value B:")
+            if str(valB) == "None":
+                return
+            if checkCode(valB, False):
+                retry = False
+                break
+            else:
+                booster.showErrorDialog("Invalid mapcode!", "Error")
+    else:
+        valA = booster.showSelectionDialog("Please select layer A: ", "MapC2 - Math","1","2","3","4","5")
         if str(valA) == "None":
             return
-        if checkCode(valA, False):
-            retry = False
-            break
-        else:
-            booster.showErrorDialog("Invalid mapcode!", "Error")
-    retry = True
-    while retry:
-        valB = booster.showTextInputDialog("Type in value B:")
+        valB = booster.showSelectionDialog("Please select layer B: ", "MapC2 - Math","1","2","3","4","5")
+        #print(valB)
         if str(valB) == "None":
             return
-        if checkCode(valB, False):
-            retry = False
-            break
-        else:
-            booster.showErrorDialog("Invalid mapcode!", "Error")
+        mA = genMap(layers[int(valA)-1], subdivs)
+#        print(m)
+        valA = str(toInt(mA))
+#        codeA = pack(str(en), subdivs, len(m))
+        mB = genMap(layers[int(valB)-1], subdivs)
+#        print(m)
+        valB = str(toInt(mB))
+#        codeA = pack(str(en), subdivs, len(m))
     op = booster.showSelectionDialog("Please select the operator: ", "MapC2 - Math", "+","-", "*", "/")
     
     if "0x" in valA[:2]:
@@ -357,26 +426,43 @@ def math():
 def bitwise():
     #0x00421084
     #0x00007C00
-    retry = True
-    while retry:
-        valA = booster.showTextInputDialog("Type in value A:")
+    if not layerSel:
+        retry = True
+        while retry:
+            valA = booster.showTextInputDialog("Type in value A:")
+            if str(valA) == "None":
+                return
+            if checkCode(valA, False):
+                retry = False
+                break
+            else:
+                booster.showErrorDialog("Invalid mapcode!", "Error")
+        retry = True
+        while retry:
+            valB = booster.showTextInputDialog("Type in value B:")
+            if str(valB) == "None":
+                return
+            if checkCode(valB, False):
+                retry = False
+                break
+            else:
+                booster.showErrorDialog("Invalid mapcode!", "Error")
+    else:
+        valA = booster.showSelectionDialog("Please select layer A: ", "MapC2 - Bitwise","1","2","3","4","5")
         if str(valA) == "None":
             return
-        if checkCode(valA, False):
-            retry = False
-            break
-        else:
-            booster.showErrorDialog("Invalid mapcode!", "Error")
-    retry = True
-    while retry:
-        valB = booster.showTextInputDialog("Type in value B:")
+        valB = booster.showSelectionDialog("Please select layer B: ", "MapC2 - Bitwise","1","2","3","4","5")
+        #print(valB)
         if str(valB) == "None":
             return
-        if checkCode(valB, False):
-            retry = False
-            break
-        else:
-            booster.showErrorDialog("Invalid mapcode!", "Error")
+        mA = genMap(layers[int(valA)-1], subdivs)
+#        print(m)
+        valA = str(toInt(mA))
+#        codeA = pack(str(en), subdivs, len(m))
+        mB = genMap(layers[int(valB)-1], subdivs)
+#        print(m)
+        valB = str(toInt(mB))
+#        codeA = pack(str(en), subdivs, len(m))
     op = booster.showSelectionDialog("Please select the operator: ", "MapC2 - Bitwise", "AND","OR", "NOT", "XOR")
     
     if "0x" in valA[:2]:
