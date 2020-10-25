@@ -2,7 +2,12 @@
 MapC2 is for creating simple maps with variable sizes.
 
 Once the map is ready, you can export it in a very compact format.
+# Dependencies & How to Build
+This project has been created on processing.py 3, go grab the IDE from [here](https://processing.org/).
+Additionally this project depends on the following processing libraries wich can be downloaded from the IDE:
+- UiBooster
 
+# Examples
 Format examples:
 
 101
