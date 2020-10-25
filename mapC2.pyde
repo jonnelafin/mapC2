@@ -153,7 +153,10 @@ def draw():
             except Exception as e:
                 data[pointer] = False
                 for li in range(len(layers)):
-                    layers[li][pointer] = False
+                    try:
+                        lol = layers[li][pointer]
+                    except Exception as e:
+                        layers[li][pointer] = False
             if data[pointer] == True:
                 fill(0, 255, 0)
                 rect(x, y, width/subdivs, height/subdivs)
