@@ -176,15 +176,18 @@ def draw():
     en = toInt(m)
     asString = str(en)
     text(asString, 50, 50)
+    if layerSel:
+        text("L", 12, 12)
 def mouseClicked(): 
     global mDown
     mDown = True
 def keyPressed():
     global subdivs, data, eGrid, eFill, layerSel
-    if str(key) in "123456789":
-        subdivs = int(key)
-    elif str(key) == "c":
+#    if str(key) in "123456789":
+#        subdivs = int(key)
+    if str(key) == "c":
         data = {}
+        layers[layern] = {}
     elif str(key) == "z":
         m = genMap(data, subdivs)
         en = toInt(m)
@@ -289,8 +292,8 @@ def keyPressed():
         math()
     elif str(key) == "b":
         bitwise()
-    elif str(key) in "ertyu":
-        layer("ertyu".find(str(key)))
+    elif str(key) in "12345":
+        layer(int(key)-1)
     elif str(key) == "l":
         layerSel = not layerSel
 def showInfo():
